@@ -1,0 +1,7 @@
+{
+  "name": "conduit-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Language-neutral Conduit message-envelope protocol: schema, transport bindings, and cross-client conformance fixtures.",
+  "license": "MIT"
+}
