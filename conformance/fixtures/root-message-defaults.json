@@ -1,0 +1,37 @@
+{
+  "name": "root-message-defaults",
+  "description": "A root message with no explicit streamId, correlationId, or causationId gets a generated streamId, defaults correlationId to its own id, and omits causationId.",
+  "scenario": "root-message",
+  "client": {
+    "source": "user-service",
+    "defaultVersion": "1.0.0"
+  },
+  "given": {
+    "id": "01JZM8FNDNGXARX13W5FQG9B3Z",
+    "timestamp": "2026-07-19T18:30:00.000Z"
+  },
+  "input": {
+    "kind": "event",
+    "type": "user.created",
+    "data": {
+      "userId": "user_123",
+      "email": "user@example.com"
+    }
+  },
+  "expected": {
+    "meta": {
+      "id": "01JZM8FNDNGXARX13W5FQG9B3Z",
+      "kind": "event",
+      "type": "user.created",
+      "version": "1.0.0",
+      "streamId": "<generated>",
+      "correlationId": "01JZM8FNDNGXARX13W5FQG9B3Z",
+      "timestamp": "2026-07-19T18:30:00.000Z",
+      "source": "user-service"
+    },
+    "data": {
+      "userId": "user_123",
+      "email": "user@example.com"
+    }
+  }
+}

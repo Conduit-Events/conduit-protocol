@@ -1,0 +1,51 @@
+{
+  "name": "child-message-inherits-parent",
+  "description": "A message created while handling a parent inherits the parent's streamId and correlationId, and sets causationId to the parent's id.",
+  "scenario": "child-message",
+  "client": {
+    "source": "email-service",
+    "defaultVersion": "1.0.0"
+  },
+  "given": {
+    "id": "message_2",
+    "timestamp": "2026-07-19T18:30:01.000Z"
+  },
+  "parent": {
+    "meta": {
+      "id": "message_1",
+      "kind": "event",
+      "type": "user.created",
+      "version": "1.0.0",
+      "streamId": "user_123",
+      "correlationId": "message_1",
+      "timestamp": "2026-07-19T18:30:00.000Z",
+      "source": "user-service"
+    },
+    "data": {
+      "userId": "user_123"
+    }
+  },
+  "childInput": {
+    "kind": "command",
+    "type": "welcome-email.send",
+    "data": {
+      "userId": "user_123"
+    }
+  },
+  "expected": {
+    "meta": {
+      "id": "message_2",
+      "kind": "command",
+      "type": "welcome-email.send",
+      "version": "1.0.0",
+      "streamId": "user_123",
+      "correlationId": "message_1",
+      "causationId": "message_1",
+      "timestamp": "2026-07-19T18:30:01.000Z",
+      "source": "email-service"
+    },
+    "data": {
+      "userId": "user_123"
+    }
+  }
+}
