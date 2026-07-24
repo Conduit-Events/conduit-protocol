@@ -1,0 +1,52 @@
+{
+  "name": "child-message-causation-id-is-not-overridable",
+  "description": "Even if a caller attempts to pass an explicit causationId when creating a child message, a conformant client must ignore it and always use the parent's id.",
+  "scenario": "child-message",
+  "client": {
+    "source": "audit-service",
+    "defaultVersion": "1.0.0"
+  },
+  "given": {
+    "id": "message_99",
+    "timestamp": "2026-07-19T18:32:00.000Z"
+  },
+  "parent": {
+    "meta": {
+      "id": "message_1",
+      "kind": "event",
+      "type": "user.created",
+      "version": "1.0.0",
+      "streamId": "user_123",
+      "correlationId": "message_1",
+      "timestamp": "2026-07-19T18:30:00.000Z",
+      "source": "user-service"
+    },
+    "data": {
+      "userId": "user_123"
+    }
+  },
+  "childInput": {
+    "kind": "event",
+    "type": "user.emailChanged",
+    "data": {
+      "userId": "user_123"
+    }
+  },
+  "attemptedCausationId": "some-other-id-caller-tried-to-set",
+  "expected": {
+    "meta": {
+      "id": "message_99",
+      "kind": "event",
+      "type": "user.emailChanged",
+      "version": "1.0.0",
+      "streamId": "user_123",
+      "correlationId": "message_1",
+      "causationId": "message_1",
+      "timestamp": "2026-07-19T18:32:00.000Z",
+      "source": "audit-service"
+    },
+    "data": {
+      "userId": "user_123"
+    }
+  }
+}

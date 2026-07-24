@@ -14,10 +14,8 @@ This directory gives every client implementation a shared, language-neutral set 
    - `streamId` is generated when not supplied (see "Generated values" below).
    - Explicit `streamId`/`correlationId`/`causationId` in the input are used as-is.
 2. **Child message inheritance** — a message created while handling a parent message:
-   - `streamId` is inherited from the parent.
-   - `correlationId` is inherited from the parent (or the parent's `id`, if the parent itself had no `correlationId`).
-   - `causationId` is set to the parent's `id`.
-   - Explicit options passed when creating the child override the inherited values.
+   - `causationId` is **always** the parent's `id`. This is a hard invariant: it is not something the caller can override when creating a child message, because a message's direct cause is a fact about how it was produced, not a preference. `childInput` therefore has no `causationId` field at all — see "Fixture file format" below.
+   - `streamId` and `correlationId` are inherited from the parent **by default**, and explicit `childInput` values override that default. Unlike `causationId`, the deeper semantics here (e.g. whether a handler should ever legitimately start a new stream or correlation) aren't fully settled yet. These fixtures only encode today's default-and-override behaviour, not a final cross-language guarantee.
 
 These rules are also described in prose in the main [protocol README](../README.md#parent-and-child-messages).
 
@@ -34,7 +32,8 @@ Each fixture is a single JSON file under [`fixtures/`](./fixtures/) with these t
 | `given`       | object | `{ "id": string, "timestamp": string }` — the values the test harness must force the client's ID generator and clock to produce for the message being created, so the result is reproducible. |
 | `input`       | object | *(`root-message` only)* The options passed to the client's message-creation call: any of `kind`, `type`, `streamId`, `correlationId`, `causationId`, `data`. Fields absent from `input` were not supplied by the caller. |
 | `parent`      | object | *(`child-message` only)* A complete parent envelope (`{ meta, data }`).               |
-| `childInput`  | object | *(`child-message` only)* The options passed when creating the child, in the same shape as `input`. |
+| `childInput`  | object | *(`child-message` only)* The options passed when creating the child: `kind`, `type`, `streamId`, `correlationId`, `data`. There is no `causationId` field — see the rule above. |
+| `attemptedCausationId` | string | *(`child-message` only, optional)* If present, the harness must additionally pass this value as a `causationId` option when creating the child — simulating a caller trying to override it — and confirm the client ignores it in favour of `parent.meta.id`. Absent from most fixtures; only used to test the non-overridability rule itself. |
 | `expected`    | object | The resulting envelope: `{ meta, data }`.                                             |
 
 ### Generated values
@@ -54,13 +53,23 @@ For each fixture:
 1. Configure the client under test using `client.source` and `client.defaultVersion`.
 2. Inject `given.id` and `given.timestamp` so they're what the client's ID generator and clock produce for this message.
 3. **`root-message`**: call the client's envelope-creation function with only the fields present in `input`.
-4. **`child-message`**: construct `parent` as the "current message" a handler is reacting to, then create a child using `childInput` — exactly as `ctx.emit()`/`ctx.command()` does in the Node client.
+4. **`child-message`**: construct `parent` as the "current message" a handler is reacting to, then create a child using `childInput` — exactly as `ctx.emit()`/`ctx.command()` does in the Node client. `causationId` is never read from caller input in this scenario; it must always come out as `parent.meta.id`.
 5. Deep-compare the resulting `{ meta, data }` against `expected`, treating `"<generated>"` per the rule above.
 
-## Example
+## Fixtures
 
-See [`fixtures/root-message-defaults.json`](./fixtures/root-message-defaults.json) and [`fixtures/child-message-inherits-parent.json`](./fixtures/child-message-inherits-parent.json) for worked examples of both scenarios.
+| File | Scenario | Covers |
+| --- | --- | --- |
+| [`root-message-defaults.json`](./fixtures/root-message-defaults.json) | root-message | No `streamId`/`correlationId`/`causationId` supplied: `streamId` generated, `correlationId` defaults to own `id`, `causationId` omitted. |
+| [`root-message-explicit-overrides.json`](./fixtures/root-message-explicit-overrides.json) | root-message | Explicit `streamId`/`correlationId`/`causationId` are all used exactly as supplied. |
+| [`child-message-inherits-parent.json`](./fixtures/child-message-inherits-parent.json) | child-message | No `childInput` overrides: `streamId`/`correlationId` inherited from parent, `causationId` set to parent's `id`. |
+| [`child-message-explicit-stream-and-correlation.json`](./fixtures/child-message-explicit-stream-and-correlation.json) | child-message | Explicit `streamId`/`correlationId` in `childInput` override the inherited defaults. |
+| [`child-message-causation-id-is-not-overridable.json`](./fixtures/child-message-causation-id-is-not-overridable.json) | child-message | Even though the schema would allow a `causationId` string, a conformant client must ignore any attempt to set one on a child message and always use the parent's `id`. |
 
 ## Status
 
-Only two illustrative fixtures exist so far, covering the simplest case of each scenario. The full set — explicit overrides, root messages with no supplied `streamId`, a root message that already carries its own `correlationId`/`causationId` inherited by its child, etc. — is not yet built out.
+The rules around `causationId` are considered settled and fully covered above.
+
+`streamId`/`correlationId` inheritance is covered only for today's default-and-override behaviour. Deeper semantics (cross-stream messages, correlation resets, etc.) are still open — expect this section to grow once those are decided, rather than treating the current fixtures as exhaustive.
+
+**Known gap:** [`child-message-causation-id-is-not-overridable.json`](./fixtures/child-message-causation-id-is-not-overridable.json) currently fails against `conduit-node-client`'s reference implementation. `Client#deriveChildOptions` in `src/client/client.js` spreads caller-supplied `options` *after* setting `causationId: parentMeta.id`, so an explicit `causationId` passed to `ctx.emit()`/`ctx.command()` currently overrides it instead of being ignored. The Node client needs a fix to match this fixture.

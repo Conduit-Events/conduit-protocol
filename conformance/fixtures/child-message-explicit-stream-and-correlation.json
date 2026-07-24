@@ -1,0 +1,55 @@
+{
+  "name": "child-message-explicit-stream-and-correlation",
+  "description": "Explicit streamId and correlationId in childInput override the values inherited from the parent, while causationId is still set to the parent's id.",
+  "scenario": "child-message",
+  "client": {
+    "source": "email-service",
+    "defaultVersion": "1.0.0"
+  },
+  "given": {
+    "id": "message_20",
+    "timestamp": "2026-07-19T18:31:00.000Z"
+  },
+  "parent": {
+    "meta": {
+      "id": "message_1",
+      "kind": "event",
+      "type": "user.created",
+      "version": "1.0.0",
+      "streamId": "user_123",
+      "correlationId": "message_1",
+      "timestamp": "2026-07-19T18:30:00.000Z",
+      "source": "user-service"
+    },
+    "data": {
+      "userId": "user_123"
+    }
+  },
+  "childInput": {
+    "kind": "command",
+    "type": "audit.log",
+    "streamId": "audit_trail_1",
+    "correlationId": "custom-correlation-99",
+    "data": {
+      "userId": "user_123",
+      "reason": "welcome-email-sent"
+    }
+  },
+  "expected": {
+    "meta": {
+      "id": "message_20",
+      "kind": "command",
+      "type": "audit.log",
+      "version": "1.0.0",
+      "streamId": "audit_trail_1",
+      "correlationId": "custom-correlation-99",
+      "causationId": "message_1",
+      "timestamp": "2026-07-19T18:31:00.000Z",
+      "source": "email-service"
+    },
+    "data": {
+      "userId": "user_123",
+      "reason": "welcome-email-sent"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "root-message-explicit-overrides",
+  "description": "A root message with explicit streamId, correlationId, and causationId uses all three exactly as supplied.",
+  "scenario": "root-message",
+  "client": {
+    "source": "user-service",
+    "defaultVersion": "1.0.0"
+  },
+  "given": {
+    "id": "01JZM8G0000000000000EXAMP",
+    "timestamp": "2026-07-24T09:00:00.000Z"
+  },
+  "input": {
+    "kind": "event",
+    "type": "order.created",
+    "streamId": "order_456",
+    "correlationId": "checkout_flow_789",
+    "causationId": "external-webhook-001",
+    "data": {
+      "orderId": "order_456"
+    }
+  },
+  "expected": {
+    "meta": {
+      "id": "01JZM8G0000000000000EXAMP",
+      "kind": "event",
+      "type": "order.created",
+      "version": "1.0.0",
+      "streamId": "order_456",
+      "correlationId": "checkout_flow_789",
+      "causationId": "external-webhook-001",
+      "timestamp": "2026-07-24T09:00:00.000Z",
+      "source": "user-service"
+    },
+    "data": {
+      "orderId": "order_456"
+    }
+  }
+}
