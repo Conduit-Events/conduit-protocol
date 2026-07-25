@@ -402,7 +402,9 @@ Field-derivation rules such as `correlationId`/`causationId`/`streamId` inherita
 
 ## Consuming this repo
 
-This repo isn't published to a package registry. A Node.js client can depend on it directly from GitHub:
+This repo isn't published to a package registry. Clients depend on it directly from GitHub instead.
+
+### Node.js
 
 ```json
 {
@@ -414,7 +416,26 @@ This repo isn't published to a package registry. A Node.js client can depend on 
 
 `npm install` resolves that to a specific commit and records it in `package-lock.json`, so installs stay reproducible until the dependency is deliberately updated. `conduit-node-client` consumes the schema this way (`require("conduit-protocol/schemas/conduit-message.schema.json")`).
 
-A future Python client would use the equivalent mechanism for its ecosystem (e.g. a direct Git dependency) rather than this repo being published anywhere.
+### Python
+
+This repo also has a `pyproject.toml` (built with `hatchling`), so it installs as a normal package from a Git URL:
+
+```sh
+uv add "git+https://github.com/Conduit-Events/conduit-protocol"
+# or: pip install "git+https://github.com/Conduit-Events/conduit-protocol"
+```
+
+The distribution name is `conduit-protocol`; the import name is `conduit_protocol` (Python import identifiers can't contain hyphens). The package bundles the schema, transport docs, and conformance fixtures as package data and exposes them via `importlib.resources`, without needing a local checkout:
+
+```python
+import json
+import conduit_protocol
+
+schema = json.loads(conduit_protocol.schema_path().read_text())
+fixtures_dir = conduit_protocol.conformance_fixtures_dir()
+```
+
+The `schemas/`, `transports/`, and `conformance/` directories at the repo root remain the canonical, language-neutral source files — the Python package just repackages them for that ecosystem's tooling, the same way `conduit-node-client`'s `package.json` dependency does for npm.
 
 ## Compatibility
 
