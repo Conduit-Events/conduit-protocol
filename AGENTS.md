@@ -9,6 +9,7 @@ Priorities:
 - `causationId` on a child message is a non-overridable invariant: it is always the parent's `id`. `streamId`/`correlationId` inheritance is default-with-override; their deeper semantics aren't fully settled yet — don't invent stronger rules for them without checking first.
 - New or changed conformance fixtures must validate against `schemas/conduit-message.schema.json` before committing. There's no CI for this yet, so check by hand (see `conformance/README.md` for the fixture format).
 - `conduit-node-client` is still the reference implementation. This repo is the spec, but the two can silently drift — if a change here affects derivation rules, check it against what `conduit-node-client` actually does.
+- This repo is packaged for both npm (`package.json`) and Python (`pyproject.toml`, `hatchling`, package `conduit_protocol`) as Git dependencies. Both package configs just repackage `schemas/`, `transports/`, and `conformance/` — those directories stay the single source of truth; don't duplicate their contents into `conduit_protocol/`.
 
 Before editing:
 
